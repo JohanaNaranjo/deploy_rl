@@ -3,41 +3,59 @@ from flask_restful import Resource
 from flask import jsonify, request
 from .. import db
 from main.models import UsuarioModel
+from main.auth.decorators import role_required
+from flask_jwt_extended import get_jwt_identity
 
 #Se define esta clase para obtener los recursos de la appi, borrar, colocar, consultar, etc.
 
 class Cliente(Resource):
+    @role_required(roles=["admin", "cliente"])
     def get(self, id):
         cliente = db.session.query(UsuarioModel).get_or_404(id)
+        current_user = get_jwt_identity()
         if cliente.role == 'cliente':
-            return cliente.to_json()
+            if current_user ['usuarioId'] == cliente.id or current_user['role'] == 'admin':
+                return cliente.to_json()
+            else:
+                return 'Unauthorized', 401
         else:
             return '', 404
     
+    @role_required(roles=["admin", "cliente"])
     def delete(self, id):
         cliente = db.session.query(UsuarioModel).get_or_404(id)
-        try:
-            db.session.delete(cliente)
-            db.session.commit()
-            return '', 204  # codigo 204 significa sin contenido
-        except:
-            return '', 404
-        
+        current_user = get_jwt_identity()
+        if cliente.role == 'cliente' and current_user['usuarioId'] == cliente.id:
+            try:
+                db.session.delete(cliente)
+                db.session.commit()
+                return '', 204  # codigo 204 significa sin contenido
+            except:
+                return '', 404
+        else:
+            return 'Unauthorized', 401
+
+    @role_required(roles=["admin", "cliente"]) 
     def put(self, id):
         cliente = db.session.query(UsuarioModel).get_or_404(id)
-        data = request.get_json().items()
-        for key, value in data:
-            setattr(cliente, key, value)
-        
-        try:
-            db.session.add(cliente)
-            db.session.commit()
-            return cliente.to_json(), 201 # Solicitud procesada correctamente
-        except:
-            return '', 404
+        current_user = get_jwt_identity()
+        if cliente.role == 'cliente' and current_user['usuarioId'] == cliente.id:
+            data = request.get_json().items()
+            for key, value in data:
+                setattr(cliente, key, value)
+            
+            try:
+                db.session.add(cliente)
+                db.session.commit()
+                return cliente.to_json(), 201 # Solicitud procesada correctamente
+            except:
+                return '', 404
+        else:
+            return 'Unauthorized', 401
 
 
 class Clientes(Resource):
+    @role_required(roles=["admin"])
     def get(self):
         #Filro solo para traer el rol de cliente 
         pagina = 1 # para realizar la paginación
@@ -65,7 +83,7 @@ class Clientes(Resource):
     
     def post(self):
         cliente = UsuarioModel.from_json(request.get_json())
-        cliente.role = 'cliente'
+        #cliente.role = Clientes.role
         db.session.add(cliente)
         db.session.commit()
         return cliente.to_json(), 201

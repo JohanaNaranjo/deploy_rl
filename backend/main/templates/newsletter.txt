@@ -1,0 +1,10 @@
+Hola {{usuario.nombre}} {{usuario.apellido}}!
+
+Los productos que tenemos para ti son:
+
+{% for producto in productos %}
+    {{producto}}
+{% endfor %}
+
+
+

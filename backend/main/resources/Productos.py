@@ -2,6 +2,8 @@ from flask_restful import Resource
 from flask import request, jsonify
 from .. import db
 from main.models import ProductoModel
+from main.auth.decorators import role_required
+from flask_jwt_extended import get_jwt_identity
 
 class Producto(Resource):
     #Obtener productos en especifico
@@ -18,6 +20,7 @@ class Producto(Resource):
             return 'Resource no found', 404
         
     #Este metodo es para editar un recurso.
+    @role_required(roles=["admin"])
     def put(self, id):
         #Petición de base de datos
         producto = db.session.query(ProductoModel).get_or_404(id)
@@ -33,6 +36,7 @@ class Producto(Resource):
             return '', 404
 
     #Metodo para borrar un registro
+    @role_required(roles=["admin"])
     def delete(self, id):
         producto = db.session.query(ProductoModel).get_or_404(id)
         try:
@@ -74,6 +78,7 @@ class Productos(Resource):
     #         'productos' : [producto.to_json() for producto in productos]
     #     })
 
+    @role_required(roles=["admin"])
     def post(self):
         #Esta función la convierte en un objeto python
         producto = ProductoModel.from_json(request.get_json()) 

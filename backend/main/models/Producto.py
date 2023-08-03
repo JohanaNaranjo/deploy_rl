@@ -1,4 +1,7 @@
+from operator import index
 from .. import db
+import datetime as dt
+
 
 #Lo que esta en parentesis es lo que hereda
 class Producto(db.Model):

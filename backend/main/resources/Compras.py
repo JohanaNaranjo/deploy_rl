@@ -2,45 +2,61 @@ from flask_restful import Resource
 from flask import request, jsonify
 from .. import db
 from main.models import CompraModel
+from main.auth.decorators import role_required
+from flask_jwt_extended import get_jwt_identity
 
 class Compra(Resource):
     #Para realizr la consulta de una sola compra, por lo que se van a declarar los siguientes metodos.
+    @role_required(roles=["admin", "cliente"])
     def get(self, id):
         compra = db.session.query(CompraModel).get_or_404(id)
-
-        try:
-            return compra.to_json()
-        except:
-            return '', 404
+        current_user= get_jwt_identity
+        if current_user['usuarioId'] == compra.usuarioId or current_user['role'] == 'admin': 
+            try:
+                return compra.to_json()
+            except:
+                return '', 404
+        else:
+            return 'Unauthorized', 401
         
 #Este metodo es para editar un recurso.
+    @role_required(roles=["admin", "cliente"])
     def put(self, id):
         #Petición de base de datos
         compra = db.session.query(CompraModel).get_or_404(id)
-        data = request.get_json().items()
-        for key, value in data:
-            #para setear los objetos
-            setattr(compra, key, value)
-        try:
-            db.session.add(compra)
-            db.session.commit()
-            return compra.to_json(), 201 # codigo 201 quiere decir que la solicitud fue aceptada y se guardo con exito
-        except:
-            return '', 404
+        current_user = get_jwt_identity
+        if current_user['usuarioId'] == compra.usuarioId or current_user['role'] == 'admin':
+            data = request.get_json().items()
+            for key, value in data:
+                #para setear los objetos
+                setattr(compra, key, value)
+            try:
+                db.session.add(compra)
+                db.session.commit()
+                return compra.to_json(), 201 # codigo 201 quiere decir que la solicitud fue aceptada y se guardo con exito
+            except:
+                return '', 404
+        return 'Unauthorized', 401
 
     #Metodo para borrar un registro
+    @role_required(roles=["admin", "cliente"])
     def delete(self, id):
         compra = db.session.query(CompraModel).get_or_404(id)
-        try:
-            db.session.delete(compra)
-            db.session.commit()
-        except:
-            return '', 404
+        current_user= get_jwt_identity
+        if current_user['usuarioId'] == compra.usuarioId or current_user['role'] == 'admin':
+            try:
+                db.session.delete(compra)
+                db.session.commit()
+            except:
+                return '', 404
+        else:
+            return 'Unauthorized', 401
 
 
 #Guardar un compra desde una base de datos, obtener está clase se utiliza para está función, por lo que los compras serán guardados en una variable compras.
 class Compras(Resource):
     #Función get para obtener las compras.
+    @role_required(roles=["admin"])
     def get(self):
         #Esta instrucción es la misma que se utilizaría en MySql, para la obtener todos los datos.
         #SELECT * FROM compras
@@ -69,7 +85,7 @@ class Compras(Resource):
         #     #Esta lista es para que vaya a recorrer todos los compras y los guarde en la lista. los convierte en json y los devuleve en la lista en forma de json
         #     'compras' : [compra.to_json() for compra in compras]
         # })
-
+    @role_required(roles=["admin", "cliente"])
     def post(self):
         #Esta función la convierte en un objeto python
         compra = CompraModel.from_json(request.get_json()) 
