@@ -13,7 +13,7 @@ def login():
 
     usuario = db.session.query(UsuarioModel).filter(UsuarioModel.email == request.get_json().get('email')).first_or_404()
     
-    if usuario.validate_pass(request.get_json().get('password')):
+    if usuario.validate_pass(request.get_json().get("password")):
         #se crea el token
         access_token = create_access_token(identity=usuario)
         #se van a devolver los datos
@@ -32,7 +32,7 @@ def register():
     usuario = UsuarioModel.from_json(request.get_json())
     exits = db.session.query(UsuarioModel).filter(UsuarioModel.email == usuario.email).scalar() is not None
     #se convierte en un escalar
-    
+
     if exits:
         return 'Duplicated email', 409
     else:

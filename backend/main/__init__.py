@@ -57,6 +57,8 @@ def create_app():
 
 
     import main.resources as resources
+    import main.controllers as controllers
+
     #Ubicación del recurso para ser obtenido.
     api.add_resource(resources.ClientesResource, '/clientes')
     api.add_resource(resources.ClienteResource, '/cliente/<id>')
@@ -68,6 +70,10 @@ def create_app():
     api.add_resource(resources.ProductoResource, '/producto/<id>')
     api.add_resource(resources.ProductosComprasResource, '/productos-compras')
     api.add_resource(resources.ProductoCompraResource, '/producto-compra/<id>')
+    
+    api.add_resource(controllers.CompraController, '/compra-controller/<id>')
+    api.add_resource(controllers.ComprasController, '/compras-controller')
+
 
     #Agregar el objeto a la app
     api.init_app(app)
